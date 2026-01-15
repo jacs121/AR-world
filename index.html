@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Surface Striker - Markerless AR Game</title>
-    <!-- A-Frame Library -->
+    <title>AR Crystal Collector - Markerless</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     
     <style>
@@ -15,36 +14,42 @@
         }
         
         body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
             color: #fff;
+            overflow: hidden;
         }
         
-        /* Full-screen container */
-        #ar-container {
+        #container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: none;
         }
         
-        /* Start Screen */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
         #start-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 2000;
+            z-index: 1000;
             padding: 20px;
             text-align: center;
         }
@@ -54,150 +59,148 @@
         }
         
         #start-screen h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #00ff88, #00ccff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         
-        #start-screen .subtitle {
-            color: #aaa;
+        #start-screen p {
+            color: #888;
             font-size: 1rem;
-            margin-bottom: 30px;
-            max-width: 90%;
+            max-width: 320px;
             line-height: 1.6;
+            margin-bottom: 25px;
         }
         
         #start-btn {
-            background: linear-gradient(135deg, #00ffff, #00d4ff);
-            color: #1a1a2e;
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #0a0a0f;
             border: none;
-            padding: 18px 50px;
-            font-size: 1.3rem;
+            padding: 16px 45px;
+            font-size: 1.2rem;
             font-weight: bold;
-            border-radius: 50px;
+            border-radius: 30px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4);
-            margin: 10px;
+            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.3);
         }
         
         #start-btn:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 15px 50px rgba(0, 255, 255, 0.6);
-        }
-        
-        #start-btn.secondary {
-            background: linear-gradient(135deg, #ff00ff, #ff00aa);
-            box-shadow: 0 10px 40px rgba(255, 0, 255, 0.4);
-        }
-        
-        #start-btn.secondary:hover {
-            box-shadow: 0 15px 50px rgba(255, 0, 255, 0.6);
+            transform: scale(1.05);
+            box-shadow: 0 12px 40px rgba(0, 255, 136, 0.5);
         }
         
         #start-btn:disabled {
-            background: #555;
+            background: #444;
+            color: #888;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
         
-        /* HUD - Score Board */
+        #demo-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: #fff;
+            border: none;
+            padding: 14px 35px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        #demo-btn:hover {
+            transform: scale(1.05);
+        }
+        
         #hud {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            padding: 15px 20px;
+            padding: 20px;
             display: none;
             justify-content: space-between;
             align-items: flex-start;
-            z-index: 1000;
             pointer-events: none;
+            z-index: 100;
         }
         
         #hud.active {
             display: flex;
         }
         
-        #score-board {
+        #score-display {
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(10px);
-            padding: 12px 20px;
-            border-radius: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            pointer-events: auto;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        #score-board .label {
-            font-size: 0.8rem;
-            color: #aaa;
+        #score-display .label {
+            font-size: 0.75rem;
+            color: #888;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
         
-        #score-board .value {
+        #score-display .value {
             font-size: 2rem;
             font-weight: bold;
-            color: #00ffff;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            color: #00ff88;
         }
         
-        #instructions {
+        #status-display {
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(10px);
-            padding: 12px 20px;
-            border-radius: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            font-size: 0.9rem;
-            max-width: 60%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 200px;
             text-align: right;
-            pointer-events: auto;
         }
         
-        #instructions .text {
+        #status-display .status {
+            font-size: 0.9rem;
             color: #fff;
             line-height: 1.4;
         }
         
-        /* Target Counter */
-        #target-counter {
-            background: rgba(255, 0, 100, 0.8);
-            padding: 8px 15px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            margin-top: 10px;
+        #status-display .sub {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 5px;
         }
         
-        /* Loading Screen */
         #loading {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(10, 10, 15, 0.95);
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 3000;
+            z-index: 2000;
         }
         
         #loading.active {
             display: flex;
         }
         
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #00ffff;
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 255, 136, 0.2);
+            border-top-color: #00ff88;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
@@ -208,230 +211,406 @@
         }
         
         #loading p {
-            font-size: 1.1rem;
-            color: #aaa;
+            color: #888;
+            font-size: 1rem;
         }
         
-        /* Score Popup Animation */
-        .score-popup {
+        /* Demo mode styles */
+        #demo-mode {
+            display: none;
             position: fixed;
-            color: #00ff00;
-            font-size: 2rem;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0f;
+            z-index: 500;
+            padding: 20px;
+        }
+        
+        #demo-mode.active {
+            display: block;
+        }
+        
+        #demo-canvas {
+            width: 100%;
+            height: calc(100% - 80px);
+            background: #1a1a2e;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+        
+        #demo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        #demo-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        #back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 25px;
+            font-size: 0.9rem;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        #back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .popup {
+            position: fixed;
+            color: #00ff88;
+            font-size: 1.8rem;
             font-weight: bold;
             pointer-events: none;
-            text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
-            animation: scoreFloat 1s ease-out forwards;
-            z-index: 1001;
+            animation: popupFloat 1s ease-out forwards;
+            z-index: 200;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
         }
         
-        @keyframes scoreFloat {
+        @keyframes popupFloat {
             0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
+            100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
         }
         
-        /* Device Not Supported Message */
-        #unsupported {
+        #unsupported-msg {
             display: none;
-            background: rgba(255, 50, 50, 0.2);
-            border: 2px solid #ff3333;
+            background: rgba(255, 100, 100, 0.15);
+            border: 1px solid rgba(255, 100, 100, 0.3);
             padding: 20px;
-            border-radius: 15px;
-            margin: 20px;
-            max-width: 400px;
+            border-radius: 12px;
+            margin-top: 20px;
+            max-width: 320px;
         }
         
-        #unsupported.show {
+        #unsupported-msg.show {
             display: block;
         }
         
-        #unsupported h3 {
-            color: #ff6666;
-            margin-bottom: 10px;
+        #unsupported-msg h3 {
+            color: #ff6b6b;
+            margin-bottom: 8px;
         }
         
-        #unsupported p {
-            color: #ccc;
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-        
-        /* 2D Mode Styles */
-        #mode-2d {
-            display: none;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        #mode-2d.active {
-            display: block;
-        }
-        
-        #mode-2d h2 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: #00ffff;
-        }
-        
-        #mode-2d p {
+        #unsupported-msg p {
+            font-size: 0.85rem;
             color: #aaa;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        
-        /* Touch feedback */
-        .touch-feedback {
-            position: fixed;
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(0, 255, 255, 0.8);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: touchPulse 0.5s ease-out forwards;
-            z-index: 999;
-        }
-        
-        @keyframes touchPulse {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
-    
-    <!-- Start Screen -->
-    <div id="start-screen">
-        <h1>AR Surface Striker</h1>
-        <p class="subtitle">
-            A markerless AR game! Find a flat surface (floor, table)<br>
-            and tap to place targets. Destroy them for points!
-        </p>
-        
-        <button id="start-btn">Start AR Game</button>
-        <button id="demo-btn" class="start-btn secondary">Try 2D Demo</button>
-        
-        <div id="unsupported">
-            <h3>WebXR Not Supported</h3>
-            <p>Your browser does not support WebXR AR. Please use Chrome on an Android device for the full AR experience, or try the 2D demo mode.</p>
-        </div>
-    </div>
-    
-    <!-- 2D Demo Mode -->
-    <div id="mode-2d">
-        <h2>2D Demo Mode</h2>
-        <p>Tap anywhere to place floating crystals!<br>Try to tap them before they disappear.</p>
-        <div id="demo-score">Score: <span id="demo-score-val">0</span></div>
-        <canvas id="demo-canvas" style="background: #1a1a2e; border-radius: 15px; max-width: 100%;"></canvas>
-        <button id="back-btn" style="margin-top: 20px; padding: 12px 30px; font-size: 1rem; background: linear-gradient(135deg, #ff00ff, #ff00aa); color: white; border: none; border-radius: 25px; cursor: pointer;">Back to Menu</button>
-    </div>
-    
-    <!-- Loading Screen -->
-    <div id="loading">
-        <div class="spinner"></div>
-        <p>Initializing AR Experience...</p>
-    </div>
-    
-    <!-- AR Container -->
-    <div id="ar-container">
+    <div id="container">
         <a-scene 
-            id="ar-scene"
+            id="scene"
             embedded
-            webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #hud"
-            renderer="logarithmicDepthBuffer: true; antialias: true;"
+            webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #overlay"
+            renderer="logarithmicDepthBuffer: true; antialias: true"
             vr-mode-ui="enabled: false">
             
-            <!-- Lighting -->
             <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
-            <a-light type="directional" color="#ffffff" intensity="0.8" position="1 2 1"></a-light>
+            <a-light type="directional" color="#ffffff" intensity="0.8" position="1 3 1"></a-light>
             
-            <!-- Reticle - shows where objects will be placed -->
             <a-entity id="reticle" visible="false">
-                <a-ring 
-                    rotation="-90 0 0" 
-                    radius-inner="0.08" 
-                    radius-outer="0.1" 
-                    color="#00ffff" 
-                    material="shader: flat; opacity: 0.8">
-                </a-ring>
-                <a-circle 
-                    rotation="-90 0 0" 
-                    radius="0.03" 
-                    color="#00ffff" 
-                    material="shader: flat; opacity: 0.6">
-                </a-circle>
+                <a-ring rotation="-90 0 0" radius-inner="0.06" radius-outer="0.08" 
+                    material="color: #00ff88; opacity: 0.8; shader: flat"></a-ring>
+                <a-ring rotation="-90 0 0" radius-inner="0.02" radius-outer="0.04" 
+                    material="color: #00ff88; opacity: 1; shader: flat; side: double"></a-ring>
             </a-entity>
             
-            <!-- Container for placed targets -->
-            <a-entity id="targets-container"></a-entity>
+            <a-entity id="objects"></a-entity>
             
-            <!-- Camera -->
             <a-entity camera>
                 <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable; far: 20"></a-entity>
             </a-entity>
         </a-scene>
-        
-        <!-- HUD -->
-        <div id="hud">
-            <div id="score-board">
-                <div class="label">Score</div>
-                <div class="value" id="score-val">0</div>
-            </div>
-            <div id="instructions">
-                <div class="text" id="instruction-text">Point at a surface and tap to place targets!</div>
-                <div id="target-counter">Targets: <span id="target-count">0</span></div>
-            </div>
+    </div>
+    
+    <div id="overlay"></div>
+    
+    <div id="hud">
+        <div id="score-display">
+            <div class="label">Score</div>
+            <div class="value" id="score">0</div>
+        </div>
+        <div id="status-display">
+            <div class="status" id="status-text">Initializing...</div>
+            <div class="sub" id="sub-text">Please wait</div>
         </div>
     </div>
     
+    <div id="start-screen">
+        <h1>AR Crystal Collector</h1>
+        <p>Place crystals on any surface around you. Tap them to collect and score points!</p>
+        <button id="start-btn">Start AR</button>
+        <button id="demo-btn">Play Demo</button>
+        <div id="unsupported-msg">
+            <h3>AR Not Supported</h3>
+            <p>For full AR, use Chrome on Android. The demo mode will work on any device.</p>
+        </div>
+    </div>
+    
+    <div id="loading">
+        <div class="loader"></div>
+        <p id="loading-text">Starting AR experience...</p>
+    </div>
+    
+    <div id="demo-mode">
+        <div id="demo-header">
+            <div id="demo-score">Score: <span id="demo-score-value">0</span></div>
+            <button id="back-btn">Back</button>
+        </div>
+        <canvas id="demo-canvas"></canvas>
+    </div>
+    
     <script>
-        // Game State
+        // Game state
         let score = 0;
-        let targetCount = 0;
-        let arSession = null;
-        let reticle = null;
-        let targetsContainer = null;
+        let gameActive = false;
+        let xrSession = null;
+        let xrRefSpace = null;
         let hitTestSource = null;
-        let hitTestSourceRequested = false;
-        let gameStarted = false;
-        const MAX_TARGETS = 15;
+        let reticle = null;
+        let objectsContainer = null;
+        const MAX_OBJECTS = 12;
+        let objectCount = 0;
         
-        // DOM Elements
+        // DOM elements
+        const scene = document.getElementById('scene');
         const startScreen = document.getElementById('start-screen');
-        const arContainer = document.getElementById('ar-container');
         const hud = document.getElementById('hud');
         const loading = document.getElementById('loading');
-        const scoreVal = document.getElementById('score-val');
-        const targetCountEl = document.getElementById('target-count');
-        const instructionText = document.getElementById('instruction-text');
-        const unsupported = document.getElementById('unsupported');
-        const mode2D = document.getElementById('mode-2d');
+        const scoreEl = document.getElementById('score');
+        const statusText = document.getElementById('status-text');
+        const subText = document.getElementById('sub-text');
+        const demoMode = document.getElementById('demo-mode');
         const demoCanvas = document.getElementById('demo-canvas');
+        const demoScoreEl = document.getElementById('demo-score-value');
+        const unsupportedMsg = document.getElementById('unsupported-msg');
         
-        // Check WebXR support
-        async function checkWebXRSupport() {
+        // Initialize
+        async function init() {
+            reticle = document.getElementById('reticle');
+            objectsContainer = document.getElementById('objects');
+            
+            // Check WebXR support
             if (navigator.xr) {
                 try {
                     const supported = await navigator.xr.isSessionSupported('immersive-ar');
                     if (supported) {
                         document.getElementById('start-btn').disabled = false;
-                        document.getElementById('demo-btn').disabled = false;
+                        unsupportedMsg.classList.remove('show');
                     } else {
                         document.getElementById('start-btn').disabled = true;
-                        document.getElementById('demo-btn').disabled = true;
-                        unsupported.classList.add('show');
+                        unsupportedMsg.classList.add('show');
                     }
                 } catch (e) {
-                    console.log('WebXR check failed:', e);
-                    unsupported.classList.add('show');
+                    document.getElementById('start-btn').disabled = true;
+                    unsupportedMsg.classList.add('show');
                 }
             } else {
-                unsupported.classList.add('show');
+                document.getElementById('start-btn').disabled = true;
+                unsupportedMsg.classList.add('show');
+            }
+            
+            // Scene loaded
+            scene.addEventListener('loaded', () => {
+                console.log('A-Frame scene loaded');
+            });
+            
+            // Enter VR handler
+            scene.addEventListener('enter-vr', async () => {
+                startScreen.classList.add('hidden');
+                hud.classList.add('active');
+                loading.classList.remove('active');
+                gameActive = true;
+                
+                // Set up hit test
+                xrSession = scene.renderer.xr.getSession();
+                xrRefSpace = await xrSession.requestReferenceSpace('local');
+                
+                const viewerSpace = await xrSession.requestReferenceSpace('viewer');
+                hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
+                
+                statusText.textContent = 'Scanning...';
+                subText.textContent = 'Point at a floor or table';
+                
+                xrSession.addEventListener('end', () => {
+                    resetGame();
+                });
+            });
+            
+            // Exit VR handler
+            scene.addEventListener('exit-vr', () => {
+                resetGame();
+            });
+            
+            // Render loop for hit testing
+            scene.renderer.setAnimationLoop((timestamp, frame) => {
+                if (frame && hitTestSource) {
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+                    
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        const pose = hit.getPose(xrRefSpace);
+                        
+                        if (pose) {
+                            reticle.setAttribute('visible', 'true');
+                            
+                            // Update reticle position and orientation
+                            const pos = pose.transform.position;
+                            const ori = pose.transform.orientation;
+                            
+                            reticle.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+                            reticle.setAttribute('rotation', `${ori.x * (180/Math.PI)} ${ori.y * (180/Math.PI)} ${ori.z * (180/Math.PI)}`);
+                            
+                            if (statusText.textContent === 'Scanning...') {
+                                statusText.textContent = 'Ready!';
+                                subText.textContent = 'Tap to place crystal';
+                            }
+                        }
+                    } else {
+                        reticle.setAttribute('visible', 'false');
+                        statusText.textContent = 'Scanning...';
+                        subText.textContent = 'Point at a floor or table';
+                    }
+                }
+                
+                // Handle tap to place objects
+                if (gameActive && reticle.getAttribute('visible') === 'true') {
+                    scene.addEventListener('click', placeObject, { once: true });
+                }
+            });
+        }
+        
+        // Place object at reticle position
+        function placeObject(e) {
+            if (!gameActive || objectCount >= MAX_OBJECTS) return;
+            
+            const pos = reticle.getAttribute('position');
+            const rot = reticle.getAttribute('rotation');
+            
+            if (pos && reticle.getAttribute('visible') === 'true') {
+                createCrystal(pos, rot);
+                objectCount++;
+                
+                if (objectCount < MAX_OBJECTS) {
+                    statusText.textContent = 'Keep going!';
+                    subText.textContent = `${MAX_OBJECTS - objectCount} more can be placed`;
+                } else {
+                    statusText.textContent = 'Max reached!';
+                    subText.textContent = 'Tap crystals to score';
+                }
+                
+                // Reset click handler
+                setTimeout(() => {
+                    if (gameActive) {
+                        scene.addEventListener('click', placeObject, { once: true });
+                    }
+                }, 500);
             }
         }
         
-        // Show floating score popup
-        function showScorePopup(x, y) {
+        // Create a crystal
+        function createCrystal(pos, rot) {
+            const shapes = ['icosahedron', 'octahedron', 'dodecahedron'];
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#95e1d3', '#f38181', '#aa96da'];
+            
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            const crystal = document.createElement('a-' + shape);
+            crystal.setAttribute('position', `${pos.x} ${pos.y + 0.15} ${pos.z}`);
+            crystal.setAttribute('rotation', `${Math.random() * 360} ${Math.random() * 360} ${Math.random() * 360}`);
+            crystal.setAttribute('scale', '0.12 0.12 0.12');
+            crystal.setAttribute('material', `color: ${color}; metalness: 0.4; roughness: 0.3; opacity: 0.9`);
+            crystal.setAttribute('class', 'clickable crystal');
+            
+            // Floating animation
+            crystal.setAttribute('animation__float', {
+                property: 'position',
+                to: `${pos.x} ${pos.y + 0.2} ${pos.z}`,
+                dir: 'alternate',
+                dur: 1500 + Math.random() * 500,
+                loop: true,
+                easing: 'easeInOutSine'
+            });
+            
+            // Rotation animation
+            crystal.setAttribute('animation__rotate', {
+                property: 'rotation',
+                to: `${Math.random() * 360} ${Math.random() * 360} ${Math.random() * 360}`,
+                dur: 4000 + Math.random() * 2000,
+                loop: true,
+                easing: 'linear'
+            });
+            
+            // Click handler
+            crystal.addEventListener('click', (e) => {
+                e.stopPropagation();
+                collectCrystal(crystal, e.clientX, e.clientY);
+            });
+            
+            // Hover effects
+            crystal.addEventListener('mouseenter', () => {
+                crystal.setAttribute('material', 'opacity', 1);
+                crystal.setAttribute('material', 'emissive', color);
+                crystal.setAttribute('material', 'emissiveIntensity', 0.4);
+            });
+            
+            crystal.addEventListener('mouseleave', () => {
+                crystal.setAttribute('material', 'opacity', 0.9);
+                crystal.setAttribute('material', 'emissive', '#000000');
+                crystal.setAttribute('material', 'emissiveIntensity', 0);
+            });
+            
+            objectsContainer.appendChild(crystal);
+        }
+        
+        // Collect crystal (tap)
+        function collectCrystal(crystal, x, y) {
+            if (!gameActive) return;
+            
+            // Show popup
+            showPopup(x, y);
+            
+            // Update score
+            score++;
+            scoreEl.textContent = score;
+            
+            // Animate out
+            crystal.setAttribute('animation__collect', {
+                property: 'scale',
+                to: '0 0 0',
+                dur: 200,
+                easing: 'easeInQuad'
+            });
+            
+            setTimeout(() => {
+                crystal.remove();
+                objectCount--;
+                
+                if (statusText.textContent === 'Max reached!') {
+                    statusText.textContent = 'Ready!';
+                    subText.textContent = 'Tap surfaces to place more';
+                }
+            }, 200);
+        }
+        
+        // Show score popup
+        function showPopup(x, y) {
             const popup = document.createElement('div');
-            popup.className = 'score-popup';
+            popup.className = 'popup';
             popup.textContent = '+1';
             popup.style.left = x + 'px';
             popup.style.top = y + 'px';
@@ -440,317 +619,162 @@
             setTimeout(() => popup.remove(), 1000);
         }
         
-        // Create a target object
-        function createTarget(position, rotation) {
-            if (targetCount >= MAX_TARGETS) {
-                instructionText.textContent = 'Max targets reached! Destroy some first!';
-                return;
-            }
-            
-            const colors = ['#ff0055', '#ffcc00', '#00ff88', '#ff6600', '#aa00ff'];
-            const shapes = ['icosahedron', 'octahedron', 'dodecahedron', 'box', 'sphere'];
-            
-            const shape = shapes[Math.floor(Math.random() * shapes.length)];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            
-            const target = document.createElement('a-' + shape);
-            target.setAttribute('position', position);
-            target.setAttribute('rotation', rotation);
-            target.setAttribute('scale', '0.15 0.15 0.15');
-            target.setAttribute('material', `color: ${color}; metalness: 0.3; roughness: 0.4; opacity: 0.9`);
-            target.setAttribute('class', 'clickable target');
-            target.setAttribute('data-rotation', rotation);
-            
-            // Add animations
-            target.setAttribute('animation__rotate', {
-                property: 'rotation',
-                to: `${Math.random() * 360} ${Math.random() * 360} ${Math.random() * 360}`,
-                dur: 3000 + Math.random() * 2000,
-                loop: true,
-                easing: 'linear'
-            });
-            
-            target.setAttribute('animation__float', {
-                property: 'position',
-                to: `${position.x} ${position.y + 0.05} ${position.z}`,
-                dir: 'alternate',
-                dur: 1000 + Math.random() * 500,
-                loop: true,
-                easing: 'easeInOutSine'
-            });
-            
-            // Add click handler
-            target.addEventListener('click', function(evt) {
-                if (!gameStarted) return;
-                
-                evt.stopPropagation();
-                
-                // Show score at tap position
-                showScorePopup(evt.clientX, evt.clientY);
-                
-                // Increment score
-                score++;
-                scoreVal.textContent = score;
-                scoreVal.style.transform = 'scale(1.3)';
-                setTimeout(() => scoreVal.style.transform = 'scale(1)', 150);
-                
-                // Remove target
-                targetCount--;
-                targetCountEl.textContent = targetCount;
-                
-                // Destruction animation
-                target.setAttribute('animation__destroy', {
-                    property: 'scale',
-                    to: '0 0 0',
-                    dur: 200,
-                    easing: 'easeInQuad'
-                });
-                
-                setTimeout(() => {
-                    target.remove();
-                    if (targetCount < MAX_TARGETS) {
-                        instructionText.textContent = 'Tap surfaces to place more targets!';
-                    }
-                }, 200);
-            });
-            
-            // Add hover effect
-            target.addEventListener('mouseenter', function() {
-                target.setAttribute('material', 'opacity', 1);
-                target.setAttribute('material', 'emissive', color);
-                target.setAttribute('material', 'emissiveIntensity', 0.3);
-            });
-            
-            target.addEventListener('mouseleave', function() {
-                target.setAttribute('material', 'opacity', 0.9);
-                target.setAttribute('material', 'emissive', '#000000');
-                target.setAttribute('material', 'emissiveIntensity', 0);
-            });
-            
-            targetsContainer.appendChild(target);
-            targetCount++;
-            targetCountEl.textContent = targetCount;
-            
-            // Update instructions
-            if (targetCount < MAX_TARGETS) {
-                instructionText.textContent = 'Great! Keep placing targets!';
-            }
+        // Reset game
+        function resetGame() {
+            gameActive = false;
+            score = 0;
+            objectCount = 0;
+            scoreEl.textContent = '0';
+            hud.classList.remove('active');
+            startScreen.classList.remove('hidden');
+            objectsContainer.innerHTML = '';
+            reticle.setAttribute('visible', 'false');
+            hitTestSource = null;
+            statusText.textContent = 'Initializing...';
+            subText.textContent = 'Please wait';
         }
         
-        // Start AR Session
+        // Start AR
         async function startAR() {
-            if (!navigator.xr) {
-                alert('WebXR not supported on this device');
-                return;
-            }
-            
             loading.classList.add('active');
-            instructionText.textContent = 'Scanning for surfaces...';
+            document.getElementById('loading-text').textContent = 'Starting AR...';
             
             try {
-                const scene = document.getElementById('ar-scene');
-                reticle = document.getElementById('reticle');
-                targetsContainer = document.getElementById('targets-container');
-                
-                await scene.addEventListener('enter-vr', function() {
-                    startScreen.classList.add('hidden');
-                    arContainer.style.display = 'block';
-                    hud.classList.add('active');
-                    loading.classList.remove('active');
-                    gameStarted = true;
-                });
-                
-                await scene.addEventListener('exit-vr', function() {
-                    arContainer.style.display = 'none';
-                    hud.classList.remove('active');
-                    startScreen.classList.remove('hidden');
-                    gameStarted = false;
-                    
-                    // Clean up targets
-                    targetsContainer.innerHTML = '';
-                    targetCount = 0;
-                    targetCountEl.textContent = '0';
-                    score = 0;
-                    scoreVal.textContent = '0';
-                });
-                
-                // Set up hit-test
-                scene.addEventListener('ar-hit-test-start', function() {
-                    instructionText.textContent = 'Surface detected! Tap to place targets!';
-                });
-                
-                scene.addEventListener('ar-hit-test-achieved', function(evt) {
-                    if (evt.detail && evt.detail.position) {
-                        instructionText.textContent = 'Tap to place a target!';
-                    }
-                });
-                
-                scene.addEventListener('ar-hit-test-lost', function() {
-                    reticle.setAttribute('visible', 'false');
-                    instructionText.textContent = 'Move device to find a surface...';
-                });
-                
-                // Handle tap to place
-                scene.addEventListener('click', function(evt) {
-                    if (!gameStarted || !reticle.getAttribute('visible')) return;
-                    
-                    const position = reticle.getAttribute('position');
-                    const rotation = reticle.getAttribute('rotation');
-                    
-                    if (position) {
-                        createTarget(position, rotation);
-                    }
-                });
-                
-                // Enter AR
                 await scene.enterVR();
-                
             } catch (e) {
-                console.error('AR Session error:', e);
                 loading.classList.remove('active');
                 alert('Failed to start AR: ' + e.message);
             }
         }
         
-        // 2D Demo Mode
-        function start2DDemo() {
+        // Demo mode
+        function startDemo() {
             startScreen.classList.add('hidden');
-            mode2D.classList.add('active');
+            demoMode.classList.add('active');
             
             const ctx = demoCanvas.getContext('2d');
             let demoScore = 0;
-            const demoScoreEl = document.getElementById('demo-score-val');
+            const crystals = [];
             
             // Set canvas size
-            demoCanvas.width = 600;
-            demoCanvas.height = 400;
+            const resizeCanvas = () => {
+                const rect = demoCanvas.parentElement.getBoundingClientRect();
+                demoCanvas.width = rect.width;
+                demoCanvas.height = rect.height - 80;
+            };
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
             
-            const targets = [];
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#95e1d3', '#f38181'];
             
-            function spawnTarget() {
-                if (targets.length < 10) {
-                    targets.push({
+            function spawnCrystal() {
+                if (crystals.length < 8) {
+                    crystals.push({
                         x: Math.random() * (demoCanvas.width - 60) + 30,
                         y: Math.random() * (demoCanvas.height - 60) + 30,
-                        size: 20 + Math.random() * 20,
-                        color: `hsl(${Math.random() * 360}, 70%, 60%)`,
-                        vx: (Math.random() - 0.5) * 2,
-                        vy: (Math.random() - 0.5) * 2,
-                        rotation: 0,
-                        rotationSpeed: (Math.random() - 0.5) * 0.1
+                        size: 15 + Math.random() * 15,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        rotation: Math.random() * Math.PI * 2,
+                        vx: (Math.random() - 0.5) * 1.5,
+                        vy: (Math.random() - 0.5) * 1.5,
+                        rotSpeed: (Math.random() - 0.5) * 0.05
                     });
                 }
             }
             
             function draw() {
-                // Clear canvas
                 ctx.fillStyle = '#1a1a2e';
                 ctx.fillRect(0, 0, demoCanvas.width, demoCanvas.height);
                 
-                // Draw grid
-                ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+                // Grid pattern
+                ctx.strokeStyle = 'rgba(0, 255, 136, 0.05)';
                 ctx.lineWidth = 1;
-                for (let i = 0; i < demoCanvas.width; i += 40) {
+                for (let x = 0; x < demoCanvas.width; x += 30) {
                     ctx.beginPath();
-                    ctx.moveTo(i, 0);
-                    ctx.lineTo(i, demoCanvas.height);
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, demoCanvas.height);
                     ctx.stroke();
                 }
-                for (let i = 0; i < demoCanvas.height; i += 40) {
+                for (let y = 0; y < demoCanvas.height; y += 30) {
                     ctx.beginPath();
-                    ctx.moveTo(0, i);
-                    ctx.lineTo(demoCanvas.width, i);
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(demoCanvas.width, y);
                     ctx.stroke();
                 }
                 
-                // Draw and update targets
-                targets.forEach((target, index) => {
+                crystals.forEach(c => {
                     ctx.save();
-                    ctx.translate(target.x, target.y);
-                    ctx.rotate(target.rotation);
+                    ctx.translate(c.x, c.y);
+                    ctx.rotate(c.rotation);
                     
-                    // Draw shape
-                    ctx.fillStyle = target.color;
+                    // Draw hexagon crystal
+                    ctx.fillStyle = c.color;
                     ctx.beginPath();
-                    ctx.moveTo(0, -target.size);
-                    for (let i = 1; i < 6; i++) {
-                        const angle = (i * 2 * Math.PI / 6) - Math.PI / 2;
-                        ctx.lineTo(Math.cos(angle) * target.size, Math.sin(angle) * target.size);
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i * Math.PI * 2) / 6 - Math.PI / 2;
+                        const x = Math.cos(angle) * c.size;
+                        const y = Math.sin(angle) * c.size;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
                     }
                     ctx.closePath();
                     ctx.fill();
                     
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                     ctx.lineWidth = 2;
                     ctx.stroke();
                     
                     ctx.restore();
                     
-                    // Update position
-                    target.x += target.vx;
-                    target.y += target.vy;
-                    target.rotation += target.rotationSpeed;
+                    // Update
+                    c.x += c.vx;
+                    c.y += c.vy;
+                    c.rotation += c.rotSpeed;
                     
-                    // Bounce off walls
-                    if (target.x < target.size || target.x > demoCanvas.width - target.size) {
-                        target.vx *= -1;
-                    }
-                    if (target.y < target.size || target.y > demoCanvas.height - target.size) {
-                        target.vy *= -1;
-                    }
+                    // Bounce
+                    if (c.x < c.size || c.x > demoCanvas.width - c.size) c.vx *= -1;
+                    if (c.y < c.size || c.y > demoCanvas.height - c.size) c.vy *= -1;
                 });
                 
                 requestAnimationFrame(draw);
             }
             
-            // Handle clicks
-            demoCanvas.addEventListener('click', function(evt) {
+            // Click to collect
+            demoCanvas.addEventListener('click', (e) => {
                 const rect = demoCanvas.getBoundingClientRect();
-                const x = (evt.clientX - rect.left) * (demoCanvas.width / rect.width);
-                const y = (evt.clientY - rect.top) * (demoCanvas.height / rect.height);
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
                 
-                // Check if clicked on a target
-                for (let i = targets.length - 1; i >= 0; i--) {
-                    const target = targets[i];
-                    const dist = Math.sqrt((x - target.x) ** 2 + (y - target.y) ** 2);
+                for (let i = crystals.length - 1; i >= 0; i--) {
+                    const c = crystals[i];
+                    const dist = Math.sqrt((x - c.x) ** 2 + (y - c.y) ** 2);
                     
-                    if (dist < target.size) {
-                        // Hit!
+                    if (dist < c.size + 5) {
                         demoScore++;
                         demoScoreEl.textContent = demoScore;
-                        demoScoreEl.style.color = '#00ff00';
-                        setTimeout(() => demoScoreEl.style.color = '#00ffff', 200);
-                        
-                        // Remove target
-                        targets.splice(i, 1);
+                        crystals.splice(i, 1);
                         break;
                     }
                 }
             });
             
-            // Start animation
             draw();
+            const spawnInterval = setInterval(spawnCrystal, 800);
             
-            // Spawn targets periodically
-            const spawnInterval = setInterval(spawnTarget, 1000);
-            
-            // Back button
-            document.getElementById('back-btn').onclick = function() {
+            document.getElementById('back-btn').onclick = () => {
                 clearInterval(spawnInterval);
-                mode2D.classList.remove('active');
+                window.removeEventListener('resize', resizeCanvas);
+                demoMode.classList.remove('active');
                 startScreen.classList.remove('hidden');
             };
         }
         
-        // Event Listeners
+        // Event listeners
         document.getElementById('start-btn').addEventListener('click', startAR);
-        document.getElementById('demo-btn').addEventListener('click', start2DDemo);
+        document.getElementById('demo-btn').addEventListener('click', startDemo);
         
-        // Initialize
-        checkWebXRSupport();
-        
-        // Also show demo button if WebXR might not work
-        document.getElementById('demo-btn').style.display = 'inline-block';
+        // Initialize on load
+        init();
     </script>
 </body>
 </html>
