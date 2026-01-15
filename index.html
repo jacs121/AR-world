@@ -1,33 +1,47 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
-    <title>doc</title>
+    <title>A-Frame AR Camera Background</title>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <style>
+      body { margin: 0; }
+      .camera-video {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Ensures video covers the whole screen */
+        z-index: -1; /* Place the video behind the A-Frame scene */
+      }
+    </style>
   </head>
-  <body style="margin:0; overflow:hidden;">
-    <a-scene
-      embedded
-      arjs="sourceType: webcam; debugUIEnabled: false;"
-      xr-mode-ui="enabled: false"
+  <body>
+    <!-- 1. Video element to display the camera stream -->
+    <video id="camera--view" class="camera-video" autoplay playsinline></video>
 
-      >
-
-      <!-- AR camera automatically shows live feed -->
-      <a-box position="0 0.5 0" material="color: cyan" scale="0.3 0.3 0.3"></a-box>
-
+    <!-- 2. A-Frame scene with a transparent background -->
+    <a-scene background="color: transparent">
+      <!-- Add 3D objects that will appear overlaid on the camera feed -->
+      <a-box position="0 1.6 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
     </a-scene>
+
+    <script>
+      // JavaScript to access the user's camera and stream it to the video element
+      const cameraView = document.querySelector("#camera--view");
+      const constraints = { video: { facingMode: "environment" }, audio: false }; // Use "user" for selfie camera
+
+      function cameraStart() {
+        navigator.mediaDevices
+          .getUserMedia(constraints)
+          .then(function(stream) {
+            cameraView.srcObject = stream;
+          })
+          .catch(function(error) {
+            console.error("Oops. Something is broken.", error);
+          });
+      }
+
+      // Start the camera when the window loads
+      window.addEventListener("load", cameraStart, false);
+    </script>
   </body>
-  <script>
-    const camera = document.querySelector("a-camera") || document.querySelector("[camera]");
-
-    function logRotation() {
-      const q = camera.object3D.quaternion;
-      console.log("Rotation:", q.x.toFixed(3), q.y.toFixed(3), q.z.toFixed(3), q.w.toFixed(3));
-      requestAnimationFrame(logRotation);
-    }
-
-    logRotation();
-
-  </script>
 </html>
