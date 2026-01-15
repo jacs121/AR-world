@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
+    <title>doc</title>
+  </head>
+  <body style="margin:0; overflow:hidden;">
+    <a-scene
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false;"
+    >
+
+      <!-- AR camera automatically shows live feed -->
+      <a-box position="0 0.5 0" material="color: cyan" scale="0.3 0.3 0.3"></a-box>
+
+    </a-scene>
+  </body>
+  <script>
+    const camera = document.querySelector("a-camera") || document.querySelector("[camera]");
+
+    function logRotation() {
+      const q = camera.object3D.quaternion;
+      console.log("Rotation:", q.x.toFixed(3), q.y.toFixed(3), q.z.toFixed(3), q.w.toFixed(3));
+      requestAnimationFrame(logRotation);
+    }
+
+    logRotation();
+
+  </script>
+</html>
