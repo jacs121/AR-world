@@ -1,17 +1,377 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>test game</title>
+    <!-- A-Frame Library (3D Engine) -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
-    <title>doc</title>
-  </head>
-  <body>
-    <a-scene>
-      <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
-      <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
-      <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
-      <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
-      <a-sky color="#ECECEC"></a-sky>
+    <!-- AR.js Library (AR Engine) -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+        }
+        
+        /* HUD: Score Board */
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(30, 30, 60, 0.8));
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        #score-board span {
+            color: #ffd700;
+            font-size: 1.6rem;
+        }
+        
+        /* HUD: Instructions */
+        #instructions {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            z-index: 1000;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.98); }
+        }
+        
+        /* Start Screen */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 0.5s ease;
+        }
+        
+        #start-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        #start-screen h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        
+        #start-screen p {
+            color: #ccc;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.6;
+        }
+        
+        #start-btn {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+        }
+        
+        #start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(233, 69, 96, 0.6);
+        }
+        
+        /* Score Popup Animation */
+        .score-popup {
+            position: absolute;
+            color: #ffd700;
+            font-size: 1.5rem;
+            font-weight: bold;
+            pointer-events: none;
+            animation: scoreFloat 1s ease-out forwards;
+            z-index: 1001;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        }
+        
+        @keyframes scoreFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+        
+        /* Loading indicator */
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 1.2rem;
+            z-index: 3000;
+        }
+        
+        #loading.hidden {
+            display: none;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #e94560;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script>
+        // Game state
+        let score = 0;
+        let gameStarted = false;
+        
+        // Component to handle crystal interaction
+        AFRAME.registerComponent('crystal-catcher', {
+            init: function () {
+                const el = this.el;
+                const scoreEl = document.getElementById('score-val');
+                const marker = el.closest('a-marker');
+                
+                // Store original color
+                const originalColor = '#ef2d5e';
+                const hitColor = '#ffd700';
+                
+                // Click handler
+                el.addEventListener('click', function (evt) {
+                    if (!gameStarted || !marker.object3D.visible) return;
+                    
+                    // Increment score
+                    score++;
+                    scoreEl.textContent = score;
+                    
+                    // Show score popup at tap position
+                    showScorePopup(evt.detail.intersection ? 
+                        {x: evt.clientX, y: evt.clientY} : 
+                        {x: window.innerWidth / 2, y: window.innerHeight / 2});
+                    
+                    // Visual feedback - flash color
+                    el.setAttribute('material', 'color', hitColor);
+                    el.setAttribute('material', 'emissive', '#ffd700');
+                    el.setAttribute('material', 'emissiveIntensity', 0.5);
+                    
+                    // Scale animation
+                    el.setAttribute('animation__scale', {
+                        property: 'scale',
+                        to: '0.1 0.1 0.1',
+                        dur: 100,
+                        easing: 'easeOutQuad'
+                    });
+                    
+                    // Reset after delay
+                    setTimeout(() => {
+                        el.setAttribute('material', 'color', originalColor);
+                        el.setAttribute('material', 'emissive', '#000000');
+                        el.setAttribute('material', 'emissiveIntensity', 0);
+                        el.setAttribute('animation__scale', {
+                            property: 'scale',
+                            to: '1 1 1',
+                            dur: 200,
+                            easing: 'easeOutElastic'
+                        });
+                        
+                        // Move to random position
+                        const randomX = (Math.random() - 0.5) * 1.5;
+                        const randomZ = (Math.random() - 0.5) * 1.5;
+                        const randomY = 0.3 + Math.random() * 0.5;
+                        
+                        el.setAttribute('animation__move', {
+                            property: 'position',
+                            to: `${randomX} ${randomY} ${randomZ}`,
+                            dur: 300,
+                            easing: 'easeOutQuad'
+                        });
+                    }, 150);
+                });
+                
+                // Hover effects
+                el.addEventListener('mouseenter', function () {
+                    if (marker.object3D.visible) {
+                        el.setAttribute('material', 'opacity', 1);
+                    }
+                });
+                
+                el.addEventListener('mouseleave', function () {
+                    el.setAttribute('material', 'opacity', 0.9);
+                });
+            }
+        });
+        
+        // Show floating score popup
+        function showScorePopup(position) {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = '+1';
+            popup.style.left = position.x + 'px';
+            popup.style.top = position.y + 'px';
+            document.body.appendChild(popup);
+            
+            setTimeout(() => {
+                popup.remove();
+            }, 1000);
+        }
+        
+        // Start game
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('instructions').innerHTML = 
+                'Point camera at <strong>Hiro Marker</strong> to play!<br>' +
+                '<small>Tap the crystals to catch them</small>';
+            gameStarted = true;
+        }
+        
+        // Hide loading when AR is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const scene = document.querySelector('a-scene');
+            
+            scene.addEventListener('loaded', function () {
+                document.getElementById('loading').classList.add('hidden');
+            });
+            
+            // Handle marker found/lost
+            const marker = document.querySelector('a-marker');
+            const instructions = document.getElementById('instructions');
+            
+            marker.addEventListener('markerFound', function() {
+                if (gameStarted) {
+                    instructions.innerHTML = '<strong style="color: #4ade80;">Marker detected!</strong> Tap the crystals!';
+                    instructions.style.animation = 'none';
+                }
+            });
+            
+            marker.addEventListener('markerLost', function() {
+                if (gameStarted) {
+                    instructions.innerHTML = 'Move camera to find the Hiro marker';
+                    instructions.style.animation = 'pulse 2s ease-in-out infinite';
+                }
+            });
+        });
+    </script>
+</head>
+<body style="margin: 0; overflow: hidden;">
+    
+    <!-- Start Screen -->
+    <div id="start-screen">
+        <h1>test game</h1>
+        <p>An augmented reality game where you tap floating crystals to score points!<br><br>
+        You'll need a <strong>Hiro Marker</strong> to play. Search for "Hiro Marker" on Google Images.</p>
+        <button id="start-btn" onclick="startGame()">Start Game</button>
+    </div>
+    
+    <!-- Loading Screen -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Initializing AR Camera...</p>
+    </div>
+    
+    <!-- HUD Layer -->
+    <div id="score-board">Score: <span id="score-val">0</span></div>
+    <div id="instructions">Loading AR Experience...</div>
+    
+    <!-- AR Scene -->
+    <a-scene 
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        renderer="logarithmicDepthBuffer: true; antialias: true;"
+        gesture-detector
+        vr-mode-ui="enabled: false">
+        
+        <!-- Hiro Marker -->
+        <a-marker preset="hiro">
+            <!-- Multiple crystals for gameplay -->
+            <!-- Main Crystal -->
+            <a-icosahedron 
+                crystal-catcher
+                class="clickable"
+                position="0 0.5 0" 
+                material="color: #ef2d5e; opacity: 0.9; metalness: 0.3; roughness: 0.4;"
+                animation__rotate="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear"
+                animation__hover="property: position; to: 0 0.6 0; dir: alternate; loop: true; dur: 1500; easing: easeInOutSine">
+            </a-icosahedron>
+            
+            <!-- Second Crystal (smaller, different color) -->
+            <a-octahedron 
+                crystal-catcher
+                class="clickable"
+                position="-0.8 0.3 0.5" 
+                scale="0.5 0.5 0.5"
+                material="color: #4ade80; opacity: 0.9; metalness: 0.3; roughness: 0.4;"
+                animation__rotate="property: rotation; to: 360 360 0; loop: true; dur: 5000; easing: linear"
+                animation__hover="property: position; to: -0.8 0.4 0.5; dir: alternate; loop: true; dur: 1200; easing: easeInOutSine">
+            </a-octahedron>
+            
+            <!-- Third Crystal (different color) -->
+            <a-dodecahedron 
+                crystal-catcher
+                class="clickable"
+                position="0.7 0.4 -0.3" 
+                scale="0.4 0.4 0.4"
+                material="color: #60a5fa; opacity: 0.9; metalness: 0.3; roughness: 0.4;"
+                animation__rotate="property: rotation; to: 0 0 360; loop: true; dur: 6000; easing: linear"
+                animation__hover="property: position; to: 0.7 0.5 -0.3; dir: alternate; loop: true; dur: 1800; easing: easeInOutSine">
+            </a-dodecahedron>
+        </a-marker>
+        
+        <!-- Camera with cursor for interaction -->
+        <a-entity camera>
+            <a-entity 
+                cursor="rayOrigin: mouse" 
+                raycaster="objects: .clickable; far: 20"
+                position="0 0 -1">
+            </a-entity>
+        </a-entity>
     </a-scene>
-  </body>
+</body>
 </html>
