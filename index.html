@@ -1,13 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>test game</title>
-    <!-- A-Frame Library (3D Engine) -->
+    <title>AR Surface Striker - Markerless AR Game</title>
+    <!-- A-Frame Library -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <!-- AR.js Library (AR Engine) -->
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     
     <style>
         * {
@@ -19,50 +17,19 @@
         body {
             margin: 0;
             overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a2e;
-        }
-        
-        /* HUD: Score Board */
-        #score-board {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(30, 30, 60, 0.8));
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
-            padding: 15px 25px;
-            border-radius: 15px;
-            font-size: 1.4rem;
-            font-weight: bold;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         
-        #score-board span {
-            color: #ffd700;
-            font-size: 1.6rem;
-        }
-        
-        /* HUD: Instructions */
-        #instructions {
-            position: absolute;
-            bottom: 30px;
+        /* Full-screen container */
+        #ar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            text-align: center;
-            z-index: 1000;
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: 500;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-            pointer-events: none;
-            animation: pulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(0.98); }
+            height: 100%;
+            display: none;
         }
         
         /* Start Screen */
@@ -78,34 +45,35 @@
             justify-content: center;
             align-items: center;
             z-index: 2000;
-            transition: opacity 0.5s ease;
+            padding: 20px;
+            text-align: center;
         }
         
         #start-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
+            display: none;
         }
         
         #start-screen h1 {
-            color: #fff;
             font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-align: center;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
-        #start-screen p {
-            color: #ccc;
-            font-size: 1.1rem;
+        #start-screen .subtitle {
+            color: #aaa;
+            font-size: 1rem;
             margin-bottom: 30px;
-            text-align: center;
-            max-width: 80%;
+            max-width: 90%;
             line-height: 1.6;
         }
         
         #start-btn {
-            background: linear-gradient(135deg, #e94560, #ff6b6b);
-            color: white;
+            background: linear-gradient(135deg, #00ffff, #00d4ff);
+            color: #1a1a2e;
             border: none;
             padding: 18px 50px;
             font-size: 1.3rem;
@@ -113,265 +81,676 @@
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4);
+            margin: 10px;
         }
         
         #start-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(233, 69, 96, 0.6);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 50px rgba(0, 255, 255, 0.6);
         }
         
-        /* Score Popup Animation */
-        .score-popup {
-            position: absolute;
-            color: #ffd700;
-            font-size: 1.5rem;
-            font-weight: bold;
+        #start-btn.secondary {
+            background: linear-gradient(135deg, #ff00ff, #ff00aa);
+            box-shadow: 0 10px 40px rgba(255, 0, 255, 0.4);
+        }
+        
+        #start-btn.secondary:hover {
+            box-shadow: 0 15px 50px rgba(255, 0, 255, 0.6);
+        }
+        
+        #start-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* HUD - Score Board */
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            display: none;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 1000;
             pointer-events: none;
-            animation: scoreFloat 1s ease-out forwards;
-            z-index: 1001;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
         }
         
-        @keyframes scoreFloat {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        #hud.active {
+            display: flex;
         }
         
-        /* Loading indicator */
+        #score-board {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            pointer-events: auto;
+        }
+        
+        #score-board .label {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        #score-board .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+        
+        #instructions {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+            max-width: 60%;
+            text-align: right;
+            pointer-events: auto;
+        }
+        
+        #instructions .text {
+            color: #fff;
+            line-height: 1.4;
+        }
+        
+        /* Target Counter */
+        #target-counter {
+            background: rgba(255, 0, 100, 0.8);
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        /* Loading Screen */
         #loading {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #fff;
-            font-size: 1.2rem;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             z-index: 3000;
         }
         
-        #loading.hidden {
-            display: none;
+        #loading.active {
+            display: flex;
         }
         
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top-color: #e94560;
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00ffff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin-bottom: 20px;
         }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        #loading p {
+            font-size: 1.1rem;
+            color: #aaa;
+        }
+        
+        /* Score Popup Animation */
+        .score-popup {
+            position: fixed;
+            color: #00ff00;
+            font-size: 2rem;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            animation: scoreFloat 1s ease-out forwards;
+            z-index: 1001;
+        }
+        
+        @keyframes scoreFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
+        }
+        
+        /* Device Not Supported Message */
+        #unsupported {
+            display: none;
+            background: rgba(255, 50, 50, 0.2);
+            border: 2px solid #ff3333;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px;
+            max-width: 400px;
+        }
+        
+        #unsupported.show {
+            display: block;
+        }
+        
+        #unsupported h3 {
+            color: #ff6666;
+            margin-bottom: 10px;
+        }
+        
+        #unsupported p {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        /* 2D Mode Styles */
+        #mode-2d {
+            display: none;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        #mode-2d.active {
+            display: block;
+        }
+        
+        #mode-2d h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #00ffff;
+        }
+        
+        #mode-2d p {
+            color: #aaa;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        /* Touch feedback */
+        .touch-feedback {
+            position: fixed;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: touchPulse 0.5s ease-out forwards;
+            z-index: 999;
+        }
+        
+        @keyframes touchPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
     </style>
-
-    <script>
-        // Game state
-        let score = 0;
-        let gameStarted = false;
-        
-        // Component to handle crystal interaction
-        AFRAME.registerComponent('crystal-catcher', {
-            init: function () {
-                const el = this.el;
-                const scoreEl = document.getElementById('score-val');
-                const marker = el.closest('a-marker');
-                
-                // Store original color
-                const originalColor = '#ef2d5e';
-                const hitColor = '#ffd700';
-                
-                // Click handler
-                el.addEventListener('click', function (evt) {
-                    if (!gameStarted || !marker.object3D.visible) return;
-                    
-                    // Increment score
-                    score++;
-                    scoreEl.textContent = score;
-                    
-                    // Show score popup at tap position
-                    showScorePopup(evt.detail.intersection ? 
-                        {x: evt.clientX, y: evt.clientY} : 
-                        {x: window.innerWidth / 2, y: window.innerHeight / 2});
-                    
-                    // Visual feedback - flash color
-                    el.setAttribute('material', 'color', hitColor);
-                    el.setAttribute('material', 'emissive', '#ffd700');
-                    el.setAttribute('material', 'emissiveIntensity', 0.5);
-                    
-                    // Scale animation
-                    el.setAttribute('animation__scale', {
-                        property: 'scale',
-                        to: '0.1 0.1 0.1',
-                        dur: 100,
-                        easing: 'easeOutQuad'
-                    });
-                    
-                    // Reset after delay
-                    setTimeout(() => {
-                        el.setAttribute('material', 'color', originalColor);
-                        el.setAttribute('material', 'emissive', '#000000');
-                        el.setAttribute('material', 'emissiveIntensity', 0);
-                        el.setAttribute('animation__scale', {
-                            property: 'scale',
-                            to: '1 1 1',
-                            dur: 200,
-                            easing: 'easeOutElastic'
-                        });
-                        
-                        // Move to random position
-                        const randomX = (Math.random() - 0.5) * 1.5;
-                        const randomZ = (Math.random() - 0.5) * 1.5;
-                        const randomY = 0.3 + Math.random() * 0.5;
-                        
-                        el.setAttribute('animation__move', {
-                            property: 'position',
-                            to: `${randomX} ${randomY} ${randomZ}`,
-                            dur: 300,
-                            easing: 'easeOutQuad'
-                        });
-                    }, 150);
-                });
-                
-                // Hover effects
-                el.addEventListener('mouseenter', function () {
-                    if (marker.object3D.visible) {
-                        el.setAttribute('material', 'opacity', 1);
-                    }
-                });
-                
-                el.addEventListener('mouseleave', function () {
-                    el.setAttribute('material', 'opacity', 0.9);
-                });
-            }
-        });
-        
-        // Show floating score popup
-        function showScorePopup(position) {
-            const popup = document.createElement('div');
-            popup.className = 'score-popup';
-            popup.textContent = '+1';
-            popup.style.left = position.x + 'px';
-            popup.style.top = position.y + 'px';
-            document.body.appendChild(popup);
-            
-            setTimeout(() => {
-                popup.remove();
-            }, 1000);
-        }
-        
-        // Start game
-        function startGame() {
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('instructions').innerHTML = 
-                'Point camera at <strong>Hiro Marker</strong> to play!<br>' +
-                '<small>Tap the crystals to catch them</small>';
-            gameStarted = true;
-        }
-        
-        // Hide loading when AR is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            const scene = document.querySelector('a-scene');
-            
-            scene.addEventListener('loaded', function () {
-                document.getElementById('loading').classList.add('hidden');
-            });
-            
-            // Handle marker found/lost
-            const marker = document.querySelector('a-marker');
-            const instructions = document.getElementById('instructions');
-            
-            marker.addEventListener('markerFound', function() {
-                if (gameStarted) {
-                    instructions.innerHTML = '<strong style="color: #4ade80;">Marker detected!</strong> Tap the crystals!';
-                    instructions.style.animation = 'none';
-                }
-            });
-            
-            marker.addEventListener('markerLost', function() {
-                if (gameStarted) {
-                    instructions.innerHTML = 'Move camera to find the Hiro marker';
-                    instructions.style.animation = 'pulse 2s ease-in-out infinite';
-                }
-            });
-        });
-    </script>
 </head>
-<body style="margin: 0; overflow: hidden;">
+<body>
     
     <!-- Start Screen -->
     <div id="start-screen">
-        <h1>test game</h1>
-        <p>An augmented reality game where you tap floating crystals to score points!<br><br>
-        You'll need a <strong>Hiro Marker</strong> to play. Search for "Hiro Marker" on Google Images.</p>
-        <button id="start-btn" onclick="startGame()">Start Game</button>
+        <h1>AR Surface Striker</h1>
+        <p class="subtitle">
+            A markerless AR game! Find a flat surface (floor, table)<br>
+            and tap to place targets. Destroy them for points!
+        </p>
+        
+        <button id="start-btn">Start AR Game</button>
+        <button id="demo-btn" class="start-btn secondary">Try 2D Demo</button>
+        
+        <div id="unsupported">
+            <h3>WebXR Not Supported</h3>
+            <p>Your browser does not support WebXR AR. Please use Chrome on an Android device for the full AR experience, or try the 2D demo mode.</p>
+        </div>
+    </div>
+    
+    <!-- 2D Demo Mode -->
+    <div id="mode-2d">
+        <h2>2D Demo Mode</h2>
+        <p>Tap anywhere to place floating crystals!<br>Try to tap them before they disappear.</p>
+        <div id="demo-score">Score: <span id="demo-score-val">0</span></div>
+        <canvas id="demo-canvas" style="background: #1a1a2e; border-radius: 15px; max-width: 100%;"></canvas>
+        <button id="back-btn" style="margin-top: 20px; padding: 12px 30px; font-size: 1rem; background: linear-gradient(135deg, #ff00ff, #ff00aa); color: white; border: none; border-radius: 25px; cursor: pointer;">Back to Menu</button>
     </div>
     
     <!-- Loading Screen -->
     <div id="loading">
         <div class="spinner"></div>
-        <p>Initializing AR Camera...</p>
+        <p>Initializing AR Experience...</p>
     </div>
     
-    <!-- HUD Layer -->
-    <div id="score-board">Score: <span id="score-val">0</span></div>
-    <div id="instructions">Loading AR Experience...</div>
-    
-    <!-- AR Scene -->
-    <a-scene 
-        embedded 
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-        renderer="logarithmicDepthBuffer: true; antialias: true;"
-        gesture-detector
-        vr-mode-ui="enabled: false">
-        
-        <!-- Hiro Marker -->
-        <a-marker preset="hiro">
-            <!-- Multiple crystals for gameplay -->
-            <!-- Main Crystal -->
-            <a-icosahedron 
-                crystal-catcher
-                class="clickable"
-                position="0 0.5 0" 
-                material="color: #ef2d5e; opacity: 0.9; metalness: 0.3; roughness: 0.4;"
-                animation__rotate="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear"
-                animation__hover="property: position; to: 0 0.6 0; dir: alternate; loop: true; dur: 1500; easing: easeInOutSine">
-            </a-icosahedron>
+    <!-- AR Container -->
+    <div id="ar-container">
+        <a-scene 
+            id="ar-scene"
+            embedded
+            webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #hud"
+            renderer="logarithmicDepthBuffer: true; antialias: true;"
+            vr-mode-ui="enabled: false">
             
-            <!-- Second Crystal (smaller, different color) -->
-            <a-octahedron 
-                crystal-catcher
-                class="clickable"
-                position="-0.8 0.3 0.5" 
-                scale="0.5 0.5 0.5"
-                material="color: #4ade80; opacity: 0.9; metalness: 0.3; roughness: 0.4;"
-                animation__rotate="property: rotation; to: 360 360 0; loop: true; dur: 5000; easing: linear"
-                animation__hover="property: position; to: -0.8 0.4 0.5; dir: alternate; loop: true; dur: 1200; easing: easeInOutSine">
-            </a-octahedron>
+            <!-- Lighting -->
+            <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
+            <a-light type="directional" color="#ffffff" intensity="0.8" position="1 2 1"></a-light>
             
-            <!-- Third Crystal (different color) -->
-            <a-dodecahedron 
-                crystal-catcher
-                class="clickable"
-                position="0.7 0.4 -0.3" 
-                scale="0.4 0.4 0.4"
-                material="color: #60a5fa; opacity: 0.9; metalness: 0.3; roughness: 0.4;"
-                animation__rotate="property: rotation; to: 0 0 360; loop: true; dur: 6000; easing: linear"
-                animation__hover="property: position; to: 0.7 0.5 -0.3; dir: alternate; loop: true; dur: 1800; easing: easeInOutSine">
-            </a-dodecahedron>
-        </a-marker>
-        
-        <!-- Camera with cursor for interaction -->
-        <a-entity camera>
-            <a-entity 
-                cursor="rayOrigin: mouse" 
-                raycaster="objects: .clickable; far: 20"
-                position="0 0 -1">
+            <!-- Reticle - shows where objects will be placed -->
+            <a-entity id="reticle" visible="false">
+                <a-ring 
+                    rotation="-90 0 0" 
+                    radius-inner="0.08" 
+                    radius-outer="0.1" 
+                    color="#00ffff" 
+                    material="shader: flat; opacity: 0.8">
+                </a-ring>
+                <a-circle 
+                    rotation="-90 0 0" 
+                    radius="0.03" 
+                    color="#00ffff" 
+                    material="shader: flat; opacity: 0.6">
+                </a-circle>
             </a-entity>
-        </a-entity>
-    </a-scene>
+            
+            <!-- Container for placed targets -->
+            <a-entity id="targets-container"></a-entity>
+            
+            <!-- Camera -->
+            <a-entity camera>
+                <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable; far: 20"></a-entity>
+            </a-entity>
+        </a-scene>
+        
+        <!-- HUD -->
+        <div id="hud">
+            <div id="score-board">
+                <div class="label">Score</div>
+                <div class="value" id="score-val">0</div>
+            </div>
+            <div id="instructions">
+                <div class="text" id="instruction-text">Point at a surface and tap to place targets!</div>
+                <div id="target-counter">Targets: <span id="target-count">0</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Game State
+        let score = 0;
+        let targetCount = 0;
+        let arSession = null;
+        let reticle = null;
+        let targetsContainer = null;
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
+        let gameStarted = false;
+        const MAX_TARGETS = 15;
+        
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const arContainer = document.getElementById('ar-container');
+        const hud = document.getElementById('hud');
+        const loading = document.getElementById('loading');
+        const scoreVal = document.getElementById('score-val');
+        const targetCountEl = document.getElementById('target-count');
+        const instructionText = document.getElementById('instruction-text');
+        const unsupported = document.getElementById('unsupported');
+        const mode2D = document.getElementById('mode-2d');
+        const demoCanvas = document.getElementById('demo-canvas');
+        
+        // Check WebXR support
+        async function checkWebXRSupport() {
+            if (navigator.xr) {
+                try {
+                    const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                    if (supported) {
+                        document.getElementById('start-btn').disabled = false;
+                        document.getElementById('demo-btn').disabled = false;
+                    } else {
+                        document.getElementById('start-btn').disabled = true;
+                        document.getElementById('demo-btn').disabled = true;
+                        unsupported.classList.add('show');
+                    }
+                } catch (e) {
+                    console.log('WebXR check failed:', e);
+                    unsupported.classList.add('show');
+                }
+            } else {
+                unsupported.classList.add('show');
+            }
+        }
+        
+        // Show floating score popup
+        function showScorePopup(x, y) {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = '+1';
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            document.body.appendChild(popup);
+            
+            setTimeout(() => popup.remove(), 1000);
+        }
+        
+        // Create a target object
+        function createTarget(position, rotation) {
+            if (targetCount >= MAX_TARGETS) {
+                instructionText.textContent = 'Max targets reached! Destroy some first!';
+                return;
+            }
+            
+            const colors = ['#ff0055', '#ffcc00', '#00ff88', '#ff6600', '#aa00ff'];
+            const shapes = ['icosahedron', 'octahedron', 'dodecahedron', 'box', 'sphere'];
+            
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            const target = document.createElement('a-' + shape);
+            target.setAttribute('position', position);
+            target.setAttribute('rotation', rotation);
+            target.setAttribute('scale', '0.15 0.15 0.15');
+            target.setAttribute('material', `color: ${color}; metalness: 0.3; roughness: 0.4; opacity: 0.9`);
+            target.setAttribute('class', 'clickable target');
+            target.setAttribute('data-rotation', rotation);
+            
+            // Add animations
+            target.setAttribute('animation__rotate', {
+                property: 'rotation',
+                to: `${Math.random() * 360} ${Math.random() * 360} ${Math.random() * 360}`,
+                dur: 3000 + Math.random() * 2000,
+                loop: true,
+                easing: 'linear'
+            });
+            
+            target.setAttribute('animation__float', {
+                property: 'position',
+                to: `${position.x} ${position.y + 0.05} ${position.z}`,
+                dir: 'alternate',
+                dur: 1000 + Math.random() * 500,
+                loop: true,
+                easing: 'easeInOutSine'
+            });
+            
+            // Add click handler
+            target.addEventListener('click', function(evt) {
+                if (!gameStarted) return;
+                
+                evt.stopPropagation();
+                
+                // Show score at tap position
+                showScorePopup(evt.clientX, evt.clientY);
+                
+                // Increment score
+                score++;
+                scoreVal.textContent = score;
+                scoreVal.style.transform = 'scale(1.3)';
+                setTimeout(() => scoreVal.style.transform = 'scale(1)', 150);
+                
+                // Remove target
+                targetCount--;
+                targetCountEl.textContent = targetCount;
+                
+                // Destruction animation
+                target.setAttribute('animation__destroy', {
+                    property: 'scale',
+                    to: '0 0 0',
+                    dur: 200,
+                    easing: 'easeInQuad'
+                });
+                
+                setTimeout(() => {
+                    target.remove();
+                    if (targetCount < MAX_TARGETS) {
+                        instructionText.textContent = 'Tap surfaces to place more targets!';
+                    }
+                }, 200);
+            });
+            
+            // Add hover effect
+            target.addEventListener('mouseenter', function() {
+                target.setAttribute('material', 'opacity', 1);
+                target.setAttribute('material', 'emissive', color);
+                target.setAttribute('material', 'emissiveIntensity', 0.3);
+            });
+            
+            target.addEventListener('mouseleave', function() {
+                target.setAttribute('material', 'opacity', 0.9);
+                target.setAttribute('material', 'emissive', '#000000');
+                target.setAttribute('material', 'emissiveIntensity', 0);
+            });
+            
+            targetsContainer.appendChild(target);
+            targetCount++;
+            targetCountEl.textContent = targetCount;
+            
+            // Update instructions
+            if (targetCount < MAX_TARGETS) {
+                instructionText.textContent = 'Great! Keep placing targets!';
+            }
+        }
+        
+        // Start AR Session
+        async function startAR() {
+            if (!navigator.xr) {
+                alert('WebXR not supported on this device');
+                return;
+            }
+            
+            loading.classList.add('active');
+            instructionText.textContent = 'Scanning for surfaces...';
+            
+            try {
+                const scene = document.getElementById('ar-scene');
+                reticle = document.getElementById('reticle');
+                targetsContainer = document.getElementById('targets-container');
+                
+                await scene.addEventListener('enter-vr', function() {
+                    startScreen.classList.add('hidden');
+                    arContainer.style.display = 'block';
+                    hud.classList.add('active');
+                    loading.classList.remove('active');
+                    gameStarted = true;
+                });
+                
+                await scene.addEventListener('exit-vr', function() {
+                    arContainer.style.display = 'none';
+                    hud.classList.remove('active');
+                    startScreen.classList.remove('hidden');
+                    gameStarted = false;
+                    
+                    // Clean up targets
+                    targetsContainer.innerHTML = '';
+                    targetCount = 0;
+                    targetCountEl.textContent = '0';
+                    score = 0;
+                    scoreVal.textContent = '0';
+                });
+                
+                // Set up hit-test
+                scene.addEventListener('ar-hit-test-start', function() {
+                    instructionText.textContent = 'Surface detected! Tap to place targets!';
+                });
+                
+                scene.addEventListener('ar-hit-test-achieved', function(evt) {
+                    if (evt.detail && evt.detail.position) {
+                        instructionText.textContent = 'Tap to place a target!';
+                    }
+                });
+                
+                scene.addEventListener('ar-hit-test-lost', function() {
+                    reticle.setAttribute('visible', 'false');
+                    instructionText.textContent = 'Move device to find a surface...';
+                });
+                
+                // Handle tap to place
+                scene.addEventListener('click', function(evt) {
+                    if (!gameStarted || !reticle.getAttribute('visible')) return;
+                    
+                    const position = reticle.getAttribute('position');
+                    const rotation = reticle.getAttribute('rotation');
+                    
+                    if (position) {
+                        createTarget(position, rotation);
+                    }
+                });
+                
+                // Enter AR
+                await scene.enterVR();
+                
+            } catch (e) {
+                console.error('AR Session error:', e);
+                loading.classList.remove('active');
+                alert('Failed to start AR: ' + e.message);
+            }
+        }
+        
+        // 2D Demo Mode
+        function start2DDemo() {
+            startScreen.classList.add('hidden');
+            mode2D.classList.add('active');
+            
+            const ctx = demoCanvas.getContext('2d');
+            let demoScore = 0;
+            const demoScoreEl = document.getElementById('demo-score-val');
+            
+            // Set canvas size
+            demoCanvas.width = 600;
+            demoCanvas.height = 400;
+            
+            const targets = [];
+            
+            function spawnTarget() {
+                if (targets.length < 10) {
+                    targets.push({
+                        x: Math.random() * (demoCanvas.width - 60) + 30,
+                        y: Math.random() * (demoCanvas.height - 60) + 30,
+                        size: 20 + Math.random() * 20,
+                        color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        rotation: 0,
+                        rotationSpeed: (Math.random() - 0.5) * 0.1
+                    });
+                }
+            }
+            
+            function draw() {
+                // Clear canvas
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, demoCanvas.width, demoCanvas.height);
+                
+                // Draw grid
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < demoCanvas.width; i += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i, demoCanvas.height);
+                    ctx.stroke();
+                }
+                for (let i = 0; i < demoCanvas.height; i += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, i);
+                    ctx.lineTo(demoCanvas.width, i);
+                    ctx.stroke();
+                }
+                
+                // Draw and update targets
+                targets.forEach((target, index) => {
+                    ctx.save();
+                    ctx.translate(target.x, target.y);
+                    ctx.rotate(target.rotation);
+                    
+                    // Draw shape
+                    ctx.fillStyle = target.color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -target.size);
+                    for (let i = 1; i < 6; i++) {
+                        const angle = (i * 2 * Math.PI / 6) - Math.PI / 2;
+                        ctx.lineTo(Math.cos(angle) * target.size, Math.sin(angle) * target.size);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    ctx.restore();
+                    
+                    // Update position
+                    target.x += target.vx;
+                    target.y += target.vy;
+                    target.rotation += target.rotationSpeed;
+                    
+                    // Bounce off walls
+                    if (target.x < target.size || target.x > demoCanvas.width - target.size) {
+                        target.vx *= -1;
+                    }
+                    if (target.y < target.size || target.y > demoCanvas.height - target.size) {
+                        target.vy *= -1;
+                    }
+                });
+                
+                requestAnimationFrame(draw);
+            }
+            
+            // Handle clicks
+            demoCanvas.addEventListener('click', function(evt) {
+                const rect = demoCanvas.getBoundingClientRect();
+                const x = (evt.clientX - rect.left) * (demoCanvas.width / rect.width);
+                const y = (evt.clientY - rect.top) * (demoCanvas.height / rect.height);
+                
+                // Check if clicked on a target
+                for (let i = targets.length - 1; i >= 0; i--) {
+                    const target = targets[i];
+                    const dist = Math.sqrt((x - target.x) ** 2 + (y - target.y) ** 2);
+                    
+                    if (dist < target.size) {
+                        // Hit!
+                        demoScore++;
+                        demoScoreEl.textContent = demoScore;
+                        demoScoreEl.style.color = '#00ff00';
+                        setTimeout(() => demoScoreEl.style.color = '#00ffff', 200);
+                        
+                        // Remove target
+                        targets.splice(i, 1);
+                        break;
+                    }
+                }
+            });
+            
+            // Start animation
+            draw();
+            
+            // Spawn targets periodically
+            const spawnInterval = setInterval(spawnTarget, 1000);
+            
+            // Back button
+            document.getElementById('back-btn').onclick = function() {
+                clearInterval(spawnInterval);
+                mode2D.classList.remove('active');
+                startScreen.classList.remove('hidden');
+            };
+        }
+        
+        // Event Listeners
+        document.getElementById('start-btn').addEventListener('click', startAR);
+        document.getElementById('demo-btn').addEventListener('click', start2DDemo);
+        
+        // Initialize
+        checkWebXRSupport();
+        
+        // Also show demo button if WebXR might not work
+        document.getElementById('demo-btn').style.display = 'inline-block';
+    </script>
 </body>
 </html>
